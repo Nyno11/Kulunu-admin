@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Management Dashboard - Kulunu Events</title>
+
+  <!-- Favicons -->
+  <link href="assets/img/ku.png" rel="icon">
+  <link href="assets/img/ku.png" rel="apple-touch-icon">
+
+  <!-- Icons + Font -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Page CSS -->
+  <link href="assets/css/admin-user-dashboard.css" rel="stylesheet">
+</head>
+
+<script>
+  (function () {
+    var session = null;
+    try { session = JSON.parse(localStorage.getItem('user_session')); } catch (e) { }
+    if (!session || !session.token) { window.location.replace('index.html'); }
+    window._adminSession = session || {};
+  })();
+</script>
+
+<body>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <img src="assets/img/ku.png" alt="Kulunu" class="logo-img">
+        <span class="logo-text">Kulunu Admin</span>
+      </div>
+      <button class="sidebar-close d-lg-none" id="sidebarClose"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="bi bi-person-circle"></i></div>
+      <div class="user-info">
+        <span class="user-name" id="adminName">Admin</span>
+        <span class="user-role" id="adminEmail">admin@kulunu.com</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <ul class="nav-list">
+        <li class="nav-item active" data-section="users">
+          <i class="bi bi-people-fill"></i>
+          <span>User Management</span>
+        </li>
+        <li class="nav-item" data-section="overview">
+          <i class="bi bi-grid-1x2-fill"></i>
+          <span>Overview</span>
+        </li>
+        <li class="nav-item" data-section="organizers">
+          <i class="bi bi-building"></i>
+          <span>Organizers</span>
+        </li>
+        <li class="nav-item" data-section="travelers">
+          <i class="bi bi-suitcase-fill"></i>
+          <span>Travelers</span>
+        </li>
+        <li class="nav-item" data-section="attendees">
+          <i class="bi bi-calendar-check-fill"></i>
+          <span>Attendees</span>
+        </li>
+        <li class="nav-item" data-section="settings">
+          <i class="bi bi-gear-fill"></i>
+          <span>Settings</span>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="window.location.href='dashboard.html'">
+        <i class="bi bi-box-arrow-left"></i>
+        <span>Log out</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-header">
+      <button class="sidebar-toggle d-lg-none" id="sidebarToggle"><i class="bi bi-list"></i></button>
+      <div class="header-branding">
+        <div>
+          <span class="eyebrow">Platform Operations</span>
+          <h1>User Management</h1>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="header-btn" id="notificationBtn"><i class="bi bi-bell"></i>
+          <span class="notification-badge">5</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="hero-panel">
+      <div class="hero-copy">
+        <p class="eyebrow">Unified user oversight</p>
+        <h2 class="hero-title">Manage every traveler, organizer and attendee from one elegant control center.</h2>
+        <p class="hero-text">Track membership health, review account status, and take fast action with the newest admin experience for Kulunu.</p>
+      </div>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="inviteUser()"><i class="bi bi-person-plus"></i> Invite New User</button>
+        <button class="btn-secondary" onclick="exportUsers()"><i class="bi bi-download"></i> Export Directory</button>
+      </div>
+    </section>
+
+    <section class="stats-grid">
+      <article class="stat-card gradient-blue">
+        <div class="stat-card-icon"><i class="bi bi-people"></i></div>
+        <div>
+          <p class="stat-label">Total Users</p>
+          <h3 class="stat-value" id="totalUsers">0</h3>
+        </div>
+        <span class="stat-chip">+12% this month</span>
+      </article>
+      <article class="stat-card gradient-green">
+        <div class="stat-card-icon"><i class="bi bi-building"></i></div>
+        <div>
+          <p class="stat-label">Organizers</p>
+          <h3 class="stat-value" id="totalOrganizers">0</h3>
+        </div>
+        <span class="stat-chip">Stable</span>
+      </article>
+      <article class="stat-card gradient-purple">
+        <div class="stat-card-icon"><i class="bi bi-suitcase-fill"></i></div>
+        <div>
+          <p class="stat-label">Travelers</p>
+          <h3 class="stat-value" id="totalTravelers">0</h3>
+        </div>
+        <span class="stat-chip">+24% week</span>
+      </article>
+      <article class="stat-card gradient-orange">
+        <div class="stat-card-icon"><i class="bi bi-person-check"></i></div>
+        <div>
+          <p class="stat-label">Pending Reviews</p>
+          <h3 class="stat-value" id="pendingApprovals">0</h3>
+        </div>
+        <span class="stat-chip warning">Action needed</span>
+      </article>
+    </section>
+
+    <section class="panel-grid">
+      <div class="panel-card panel-table">
+        <div class="panel-heading">
+          <div>
+            <h2>Active User Directory</h2>
+            <p>Search, filter and manage platform accounts for all roles.</p>
+          </div>
+          <div class="panel-controls">
+            <div class="filter-group">
+              <label>Role</label>
+              <select id="roleFilter">
+                <option value="">All Roles</option>
+                <option value="traveler">Traveler</option>
+                <option value="organizer">Organizer</option>
+                <option value="attendee">Attendee</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Status</label>
+              <select id="statusFilter">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+                <option value="suspended">Suspended</option>
+              </select>
+            </div>
+            <div class="search-box">
+              <i class="bi bi-search"></i>
+              <input type="text" id="userSearch" placeholder="Search by name or email..." />
+            </div>
+          </div>
+        </div>
+
+        <div class="table-toolbar">
+          <div class="toolbar-left">
+            <label class="checkbox-inline">
+              <input type="checkbox" id="selectAllCheckbox" />
+              Select all
+            </label>
+            <span id="bulkActionCount">0 users selected</span>
+          </div>
+          <div class="toolbar-actions">
+            <button class="action-btn" id="bulkActivate">Activate selected</button>
+            <button class="action-btn" id="bulkSuspend">Suspend selected</button>
+            <button class="action-btn" id="bulkExport">Export selected</button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="user-table">
+            <thead>
+              <tr>
+                <th class="checkbox-column"><input type="checkbox" id="headerSelectAll"></th>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Email</th>
+                <th>Joined</th>
+                <th>Status</th>
+                <th>Last Active</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="userTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <aside class="panel-card panel-summary">
+        <div class="summary-card">
+          <span class="summary-label">Role breakdown</span>
+          <div class="summary-chart" id="roleDistribution"></div>
+          <div class="summary-list">
+            <div><span class="summary-dot dot-traveler"></span>Travelers <strong id="roleTraveler">0</strong></div>
+            <div><span class="summary-dot dot-organizer"></span>Organizers <strong id="roleOrganizer">0</strong></div>
+            <div><span class="summary-dot dot-attendee"></span>Attendees <strong id="roleAttendee">0</strong></div>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-card-header">
+            <h3>Recent Signups</h3>
+            <button class="btn-link" onclick="showAllRecent()">View all</button>
+          </div>
+          <div class="recent-list" id="recentUsers"></div>
+        </div>
+
+        <div class="summary-card info-card">
+          <h3>Platform Pulse</h3>
+          <div class="info-item">
+            <span>Verification Rate</span>
+            <strong>92%</strong>
+          </div>
+          <div class="info-item">
+            <span>Monthly Active</span>
+            <strong>78%</strong>
+          </div>
+          <div class="info-item">
+            <span>Help Desk Load</span>
+            <strong>4 open tickets</strong>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div class="modal" id="userModal">
+    <div class="modal-overlay" onclick="closeUserModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>User details</h3>
+        <button class="modal-close" onclick="closeUserModal()"><i class="bi bi-x"></i></button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script src="core/admin-user-dashboard.js"></script>
+</body>
+
+</html>
